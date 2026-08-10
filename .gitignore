@@ -1,0 +1,28 @@
+# Environment variables & secrets
+.env
+
+# Python cache & build outputs
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+
+# Database & outputs
+*.db
+outputs/*.pptx
+outputs/*.pdf
+!outputs/.gitkeep
+temp_uploads/*
+!temp_uploads/.gitkeep
+assets/generated_images/*
+!assets/generated_images/.gitkeep
+
+# Node.js / React Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.oxlintrc.json
+.DS_Store
