@@ -27,12 +27,15 @@ DEFAULT_TESSERACT_PATHS = [
     r"C:\Program Files (x86)\Tesseract-OCR\tesseract.exe",
 ]
 
-# Assets & Storage Directories
+# Writable directory check for Vercel / serverless environment (/tmp)
+IS_VERCEL = bool(os.getenv("VERCEL")) or not os.access(BASE_DIR, os.W_OK)
+WRITABLE_DIR = Path("/tmp") if IS_VERCEL else BASE_DIR
+
 ASSETS_DIR = BASE_DIR / "assets"
-GENERATED_IMAGES_DIR = ASSETS_DIR / "generated_images"
-OUTPUTS_DIR = BASE_DIR / "outputs"
-TEMP_UPLOADS_DIR = BASE_DIR / "temp_uploads"
-DB_PATH = BASE_DIR / "slidestudioz.db"
+GENERATED_IMAGES_DIR = WRITABLE_DIR / "assets" / "generated_images"
+OUTPUTS_DIR = WRITABLE_DIR / "outputs"
+TEMP_UPLOADS_DIR = WRITABLE_DIR / "temp_uploads"
+DB_PATH = WRITABLE_DIR / "slidestudioz.db"
 
 KNOWLEDGEBASE_PATH = BASE_DIR / "src" / "knowledgebase.md"
 DEFAULT_LOGO_PATH = ASSETS_DIR / "slidestudioz_logo.png"
