@@ -2,7 +2,7 @@
 
 Executive AI Presentation Deck and Document Generator.
 
-**Live Demo / Hosted Web Application**: [https://slidestudioz.salstudioz.top/](https://slidestudioz.salstudioz.top/)
+**Live Demo / Hosted Web Application**: [https://slidestudioz.salstudioz.top/](https://slidestudioz.vercel.app/)
 
 SlideStudioZ is a full-stack presentation generator designed to build 16:9 widescreen PowerPoint (`.pptx`) and PDF (`.pdf`) slide decks from prompts, proposal briefs, document files (PDF/Images), and company knowledgebase files (`.txt`/`.md`).
 
