@@ -44,8 +44,7 @@ export default function Dashboard({ onSelectProject, onCreateNew }) {
     e.stopPropagation();
     setActionLoading(prev => ({ ...prev, [projectId]: 'exporting' }));
     try {
-      const res = await api.generatePresentation(projectId);
-      const pptxUrl = `http://localhost:8000${res.data.pptx_download_url}`;
+      const pptxUrl = res.data.pptx_download_url;
       window.open(pptxUrl, '_blank');
       fetchProjects();
     } catch (err) {

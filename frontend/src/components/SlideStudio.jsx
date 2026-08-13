@@ -224,7 +224,7 @@ export default function SlideStudio({ project, initialSlides, onBackToDashboard 
           <div className="flex items-center gap-2">
             {exportResult.pptx_download_url && (
               <a
-                href={`http://localhost:8000${exportResult.pptx_download_url}`}
+                href={exportResult.pptx_download_url}
                 target="_blank"
                 rel="noreferrer"
                 className="btn btn-primary text-xs py-2 px-4"
@@ -236,7 +236,7 @@ export default function SlideStudio({ project, initialSlides, onBackToDashboard 
 
             {exportResult.pdf_download_url && (
               <a
-                href={`http://localhost:8000${exportResult.pdf_download_url}`}
+                href={exportResult.pdf_download_url}
                 target="_blank"
                 rel="noreferrer"
                 className="btn btn-secondary text-xs py-2 px-4"
