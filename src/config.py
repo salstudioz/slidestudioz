@@ -31,16 +31,17 @@ DEFAULT_TESSERACT_PATHS = [
 IS_VERCEL = bool(os.getenv("VERCEL")) or not os.access(BASE_DIR, os.W_OK)
 WRITABLE_DIR = Path("/tmp") if IS_VERCEL else BASE_DIR
 
-ASSETS_DIR = BASE_DIR / "assets"
-GENERATED_IMAGES_DIR = WRITABLE_DIR / "assets" / "generated_images"
+ASSETS_DIR = WRITABLE_DIR / "assets"
+GENERATED_IMAGES_DIR = ASSETS_DIR / "generated_images"
 OUTPUTS_DIR = WRITABLE_DIR / "outputs"
 TEMP_UPLOADS_DIR = WRITABLE_DIR / "temp_uploads"
 DB_PATH = WRITABLE_DIR / "slidestudioz.db"
 
 KNOWLEDGEBASE_PATH = BASE_DIR / "src" / "knowledgebase.md"
-DEFAULT_LOGO_PATH = ASSETS_DIR / "slidestudioz_logo.png"
+DEFAULT_LOGO_PATH = BASE_DIR / "assets" / "slidestudioz_logo.png"
 
 # Ensure directories exist
+ASSETS_DIR.mkdir(parents=True, exist_ok=True)
 GENERATED_IMAGES_DIR.mkdir(parents=True, exist_ok=True)
 OUTPUTS_DIR.mkdir(parents=True, exist_ok=True)
 TEMP_UPLOADS_DIR.mkdir(parents=True, exist_ok=True)

@@ -119,8 +119,8 @@ def list_projects():
 def create_project(req: CreateProjectPayload):
     """Create a new presentation project."""
     project_id = f"proj_{uuid.uuid4().hex[:10]}"
-    topic_name = req.topic.split("\n")[0].slice(0, 60) if (req.topic and hasattr(req.topic, 'slice')) else (req.topic.split("\n")[0][:60] if req.topic else (req.name or "Untitled Presentation"))
-    raw_text = req.raw_input or req.topic
+    topic_name = req.topic.split("\n")[0][:60] if req.topic else (req.name or "Untitled Presentation")
+    raw_text = req.raw_input or req.topic or ""
     slide_cnt = req.target_slides if (req.target_slides and req.target_slides > 0) else 8
 
     database.create_project(
