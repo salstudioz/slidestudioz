@@ -23,12 +23,11 @@
       "dest": "server.py"
     },
     {
-      "src": "/assets/(.*)",
-      "dest": "server.py"
+      "handle": "filesystem"
     },
     {
       "src": "/(.*)",
-      "dest": "/frontend/dist/$1"
+      "dest": "/index.html"
     }
   ]
 }
