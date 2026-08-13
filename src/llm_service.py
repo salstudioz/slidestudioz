@@ -34,6 +34,7 @@ def get_openrouter_client() -> OpenAI:
     return OpenAI(
         base_url="https://openrouter.ai/api/v1",
         api_key=OPENROUTER_API_KEY,
+        timeout=15.0,
         default_headers={
             "HTTP-Referer": "https://slidestudioz.ai",
             "X-Title": "SlideStudioZ Presentation Generator"
@@ -171,8 +172,6 @@ def generate_presales_draft(
     model: str = DEFAULT_MODEL
 ) -> Dict[str, Any]:
     """Generate structured presentation slide draft via OpenRouter LLM with metadata & grounding context."""
-    client = get_openrouter_client()
-
     detected_sections = parse_sections_from_text(raw_input) if input_type == "upload" else []
     
     if detected_sections and len(detected_sections) > 3:
@@ -184,6 +183,12 @@ def generate_presales_draft(
         slide_instruction = f"Susunlah slide secara komprehensif meng-cover seluruh {slide_count} seksi dokumen."
     else:
         slide_instruction = f"Susunlah slide sebanyak PERSIS {slide_count} slide dan pastikan SEMUA seksi dari dokumen ter-cover."
+
+    try:
+        client = get_openrouter_client()
+    except Exception as e:
+        print(f"[LLM Notice]: OpenRouter client not initialized ({e}). Using fallback section parser.")
+        return generate_fallback_draft(raw_input, company_name, slide_count, duration, presenter, audience, language, tone, detected_sections)
 
     search_context = ""
     if use_web_search and raw_input:
