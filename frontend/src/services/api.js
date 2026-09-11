@@ -6,8 +6,29 @@ const api = axios.create({
   baseURL: API_BASE_URL,
 });
 
+export const getUserId = () => {
+  let userId = localStorage.getItem('slidestudioz_user_id');
+  if (!userId) {
+    userId = 'usr_' + Math.random().toString(36).substring(2, 10) + Date.now().toString(36).slice(-4);
+    localStorage.setItem('slidestudioz_user_id', userId);
+  }
+  return userId;
+};
+
+export const resetUserId = () => {
+  const newUserId = 'usr_' + Math.random().toString(36).substring(2, 10) + Date.now().toString(36).slice(-4);
+  localStorage.setItem('slidestudioz_user_id', newUserId);
+  return newUserId;
+};
+
+api.interceptors.request.use((config) => {
+  config.headers['X-User-ID'] = getUserId();
+  return config;
+});
+
 export const getDownloadUrl = (projectId, format = 'pptx') => {
-  return `${API_BASE_URL}/projects/${projectId}/download?format=${format}`;
+  const uId = getUserId();
+  return `${API_BASE_URL}/projects/${projectId}/download?format=${format}&user_id=${uId}`;
 };
 
 export const projectService = {

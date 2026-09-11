@@ -1,11 +1,26 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import Home from './pages/Home';
 import NewProject from './pages/NewProject';
 import DraftReview from './pages/DraftReview';
 import Result from './pages/Result';
+import { getUserId, resetUserId } from './services/api';
 
 function App() {
+  const [currentUserId, setCurrentUserId] = useState('');
+
+  useEffect(() => {
+    setCurrentUserId(getUserId());
+  }, []);
+
+  const handleResetUser = () => {
+    if (window.confirm("Buat Workspace / User ID baru? Proyek di session ini tidak akan terhapus namun akan terpisah dari workspace baru.")) {
+      const newId = resetUserId();
+      setCurrentUserId(newId);
+      window.location.href = "/";
+    }
+  };
+
   return (
     <Router>
       <div className="min-h-screen bg-[#F8FAFC] font-sans text-slate-900 flex flex-col">
@@ -19,6 +34,25 @@ function App() {
               </div>
               <span>Slide<span className="gradient-text">StudioZ</span></span>
             </Link>
+
+            <div className="flex items-center space-x-3 text-xs">
+              <div 
+                title={`User Workspace ID: ${currentUserId} (Isolasi data aktif)`}
+                className="bg-slate-800/90 border border-slate-700/80 px-3 py-1.5 rounded-xl font-mono flex items-center text-slate-300 shadow-sm"
+              >
+                <span className="w-2 h-2 rounded-full bg-emerald-400 mr-2 animate-pulse"></span>
+                <span className="font-sans text-[11px] text-slate-400 mr-1.5 font-bold">Workspace:</span>
+                <span className="font-semibold text-blue-400">{currentUserId ? currentUserId.slice(0, 14) : '...'}</span>
+              </div>
+              
+              <button 
+                onClick={handleResetUser}
+                title="Ganti ke Workspace / User ID Baru"
+                className="bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white px-2.5 py-1.5 rounded-xl border border-slate-700/80 transition-colors font-bold text-[11px]"
+              >
+                Switch Session
+              </button>
+            </div>
           </div>
         </header>
         

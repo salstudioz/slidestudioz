@@ -17,6 +17,7 @@ def init_db():
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS projects (
             id TEXT PRIMARY KEY,
+            user_id TEXT DEFAULT 'default_user',
             name TEXT NOT NULL,
             company_name TEXT DEFAULT 'Enterprise Solutions',
             logo_path TEXT DEFAULT '',
@@ -46,6 +47,8 @@ def init_db():
         cursor.execute("ALTER TABLE projects ADD COLUMN logo_path TEXT DEFAULT ''")
     if 'knowledge_base' not in columns:
         cursor.execute("ALTER TABLE projects ADD COLUMN knowledge_base TEXT DEFAULT ''")
+    if 'user_id' not in columns:
+        cursor.execute("ALTER TABLE projects ADD COLUMN user_id TEXT DEFAULT 'default_user'")
     
     # Slides table
     cursor.execute("""
@@ -72,6 +75,7 @@ def create_project(
     name: str,
     input_type: str,
     raw_input: str,
+    user_id: str = "default_user",
     company_name: str = "Enterprise Solutions",
     logo_path: str = "",
     knowledge_base: str = "",
@@ -86,9 +90,9 @@ def create_project(
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("""
-        INSERT INTO projects (id, name, company_name, logo_path, knowledge_base, input_type, raw_input, slide_count, duration, presenter, audience, language, tone, status, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'draft', ?, ?)
-    """, (project_id, name, company_name, logo_path, knowledge_base, input_type, raw_input, slide_count, duration, presenter, audience, language, tone, now, now))
+        INSERT INTO projects (id, user_id, name, company_name, logo_path, knowledge_base, input_type, raw_input, slide_count, duration, presenter, audience, language, tone, status, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'draft', ?, ?)
+    """, (project_id, user_id or "default_user", name, company_name, logo_path, knowledge_base, input_type, raw_input, slide_count, duration, presenter, audience, language, tone, now, now))
     conn.commit()
     conn.close()
     return project_id
@@ -104,16 +108,24 @@ def update_project_metadata(
     language: str,
     tone: str,
     slide_count: int,
-    knowledge_base: str = ""
+    knowledge_base: str = "",
+    user_id: Optional[str] = None
 ):
     now = datetime.now().isoformat()
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute("""
-        UPDATE projects
-        SET name = ?, company_name = ?, logo_path = ?, knowledge_base = ?, duration = ?, presenter = ?, audience = ?, language = ?, tone = ?, slide_count = ?, updated_at = ?
-        WHERE id = ?
-    """, (name, company_name, logo_path, knowledge_base, duration, presenter, audience, language, tone, slide_count, now, project_id))
+    if user_id:
+        cursor.execute("""
+            UPDATE projects
+            SET name = ?, company_name = ?, logo_path = ?, knowledge_base = ?, duration = ?, presenter = ?, audience = ?, language = ?, tone = ?, slide_count = ?, updated_at = ?
+            WHERE id = ? AND (user_id = ? OR user_id = 'default_user')
+        """, (name, company_name, logo_path, knowledge_base, duration, presenter, audience, language, tone, slide_count, now, project_id, user_id))
+    else:
+        cursor.execute("""
+            UPDATE projects
+            SET name = ?, company_name = ?, logo_path = ?, knowledge_base = ?, duration = ?, presenter = ?, audience = ?, language = ?, tone = ?, slide_count = ?, updated_at = ?
+            WHERE id = ?
+        """, (name, company_name, logo_path, knowledge_base, duration, presenter, audience, language, tone, slide_count, now, project_id))
     conn.commit()
     conn.close()
 
@@ -145,20 +157,26 @@ def save_slides(project_id: str, slides_data: List[Dict[str, Any]]):
     conn.commit()
     conn.close()
 
-def get_project(project_id: str) -> Optional[Dict[str, Any]]:
+def get_project(project_id: str, user_id: Optional[str] = None) -> Optional[Dict[str, Any]]:
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM projects WHERE id = ?", (project_id,))
+    if user_id:
+        cursor.execute("SELECT * FROM projects WHERE id = ? AND (user_id = ? OR user_id = 'default_user')", (project_id, user_id))
+    else:
+        cursor.execute("SELECT * FROM projects WHERE id = ?", (project_id,))
     row = cursor.fetchone()
     conn.close()
     if row:
         return dict(row)
     return None
 
-def list_projects() -> List[Dict[str, Any]]:
+def list_projects(user_id: Optional[str] = None) -> List[Dict[str, Any]]:
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM projects ORDER BY datetime(updated_at) DESC")
+    if user_id:
+        cursor.execute("SELECT * FROM projects WHERE user_id = ? OR user_id = 'default_user' ORDER BY datetime(updated_at) DESC", (user_id,))
+    else:
+        cursor.execute("SELECT * FROM projects ORDER BY datetime(updated_at) DESC")
     rows = cursor.fetchall()
     conn.close()
     return [dict(r) for r in rows]
@@ -211,11 +229,15 @@ def update_project_status(project_id: str, status: str, pptx_path: str = None, p
     conn.commit()
     conn.close()
 
-def delete_project(project_id: str):
+def delete_project(project_id: str, user_id: Optional[str] = None):
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute("DELETE FROM slides WHERE project_id = ?", (project_id,))
-    cursor.execute("DELETE FROM projects WHERE id = ?", (project_id,))
+    if user_id:
+        cursor.execute("DELETE FROM slides WHERE project_id IN (SELECT id FROM projects WHERE id = ? AND (user_id = ? OR user_id = 'default_user'))", (project_id, user_id))
+        cursor.execute("DELETE FROM projects WHERE id = ? AND (user_id = ? OR user_id = 'default_user')", (project_id, user_id))
+    else:
+        cursor.execute("DELETE FROM slides WHERE project_id = ?", (project_id,))
+        cursor.execute("DELETE FROM projects WHERE id = ?", (project_id,))
     conn.commit()
     conn.close()
 

@@ -1,7 +1,7 @@
 import os
 import uuid
 from typing import List, Dict, Any, Optional
-from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Body, Query
+from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Body, Query, Header
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -108,15 +108,15 @@ def health_check():
 
 @app.get("/api/projects")
 @app.get("/api/projects/")
-def list_projects():
-    """List all presentation projects."""
-    raw_projects = database.list_projects()
+def list_projects(x_user_id: Optional[str] = Header(None, alias="X-User-ID")):
+    """List all presentation projects for the given user."""
+    raw_projects = database.list_projects(user_id=x_user_id)
     formatted = [format_project_dict(p) for p in raw_projects]
     return formatted
 
 @app.post("/api/projects")
 @app.post("/api/projects/")
-def create_project(req: CreateProjectPayload):
+def create_project(req: CreateProjectPayload, x_user_id: Optional[str] = Header(None, alias="X-User-ID")):
     """Create a new presentation project."""
     project_id = f"proj_{uuid.uuid4().hex[:10]}"
     topic_name = req.topic.split("\n")[0][:60] if req.topic else (req.name or "Untitled Presentation")
@@ -125,6 +125,7 @@ def create_project(req: CreateProjectPayload):
 
     database.create_project(
         project_id=project_id,
+        user_id=x_user_id or "default_user",
         name=topic_name,
         company_name=req.company_name or "Enterprise Solutions",
         logo_path=req.logo_path or "",
@@ -139,13 +140,13 @@ def create_project(req: CreateProjectPayload):
         tone=req.tone or "Formal Enterprise"
     )
     
-    project = database.get_project(project_id)
+    project = database.get_project(project_id, user_id=x_user_id)
     return format_project_dict(project)
 
 @app.get("/api/projects/{project_id}")
-def get_project_details(project_id: str):
+def get_project_details(project_id: str, x_user_id: Optional[str] = Header(None, alias="X-User-ID")):
     """Get project metadata and slides."""
-    project = database.get_project(project_id)
+    project = database.get_project(project_id, user_id=x_user_id)
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
     
@@ -161,22 +162,22 @@ def get_project_details(project_id: str):
     }
 
 @app.delete("/api/projects/{project_id}")
-def delete_project(project_id: str):
+def delete_project(project_id: str, x_user_id: Optional[str] = Header(None, alias="X-User-ID")):
     """Delete a presentation project."""
-    project = database.get_project(project_id)
+    project = database.get_project(project_id, user_id=x_user_id)
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
     
-    database.delete_project(project_id)
+    database.delete_project(project_id, user_id=x_user_id)
     return {"status": "success", "message": f"Project {project_id} deleted"}
 
 # --- Draft Routes ---
 
 @app.post("/api/projects/{project_id}/draft")
 @app.post("/api/projects/{project_id}/draft/regenerate")
-def generate_or_regenerate_draft(project_id: str):
+def generate_or_regenerate_draft(project_id: str, x_user_id: Optional[str] = Header(None, alias="X-User-ID")):
     """Generate or regenerate draft slides using OpenRouter LLM."""
-    project = database.get_project(project_id)
+    project = database.get_project(project_id, user_id=x_user_id)
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
 
@@ -227,9 +228,9 @@ def generate_or_regenerate_draft(project_id: str):
         raise HTTPException(status_code=500, detail=f"LLM Slide Draft Generation Failed: {str(e)}")
 
 @app.get("/api/projects/{project_id}/draft")
-def get_draft(project_id: str):
+def get_draft(project_id: str, x_user_id: Optional[str] = Header(None, alias="X-User-ID")):
     """Get current draft slides for a project."""
-    project = database.get_project(project_id)
+    project = database.get_project(project_id, user_id=x_user_id)
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
     
@@ -246,9 +247,9 @@ def get_draft(project_id: str):
 
 @app.put("/api/projects/{project_id}/draft")
 @app.put("/api/projects/{project_id}/slides")
-def update_draft(project_id: str, payload: DraftPayload):
+def update_draft(project_id: str, payload: DraftPayload, x_user_id: Optional[str] = Header(None, alias="X-User-ID")):
     """Update draft slides."""
-    project = database.get_project(project_id)
+    project = database.get_project(project_id, user_id=x_user_id)
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
 
@@ -262,7 +263,7 @@ def update_draft(project_id: str, payload: DraftPayload):
         slides_data.append({
             "slide_number": i,
             "layout_type": layout_str,
-            "title": s.title,
+            "title": s.title or "",
             "subtitle": s.subtitle or "",
             "content": content_val,
             "image_prompt": s.visual_request or s.image_prompt or "",
@@ -284,9 +285,9 @@ def update_draft(project_id: str, payload: DraftPayload):
     }
 
 @app.post("/api/projects/{project_id}/generate")
-def generate_final(project_id: str):
+def generate_final(project_id: str, x_user_id: Optional[str] = Header(None, alias="X-User-ID")):
     """Generate final PPTX and PDF presentation files."""
-    project = database.get_project(project_id)
+    project = database.get_project(project_id, user_id=x_user_id)
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
 
@@ -331,9 +332,10 @@ def generate_final(project_id: str):
         raise HTTPException(status_code=500, detail=f"Export failed: {str(e)}")
 
 @app.get("/api/projects/{project_id}/download")
-def download_presentation(project_id: str, format: str = Query("pptx")):
+def download_presentation(project_id: str, format: str = Query("pptx"), x_user_id: Optional[str] = Header(None, alias="X-User-ID"), user_id: Optional[str] = Query(None)):
     """Download generated PPTX or PDF file."""
-    project = database.get_project(project_id)
+    effective_user_id = x_user_id or user_id
+    project = database.get_project(project_id, user_id=effective_user_id)
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
 
