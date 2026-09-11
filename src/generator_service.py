@@ -437,6 +437,82 @@ def create_cards_slide(prs, slide_data: Dict[str, Any], current: int, total: int
         p_cb.font.size = Pt(cb_size)
         p_cb.font.color.rgb = INK_TEXT
 
+def create_two_column_slide(prs, slide_data: Dict[str, Any], current: int, total: int, company_name: str = "Enterprise Solutions", logo_path: Optional[str] = None):
+    blank_layout = prs.slide_layouts[6]
+    slide = prs.slides.add_slide(blank_layout)
+    apply_background(slide, WHITE)
+    add_header_and_footer(slide, current, total, slide_data.get("title", ""), company_name, logo_path)
+
+    title_text = slide_data.get("title", "")
+    title_box = slide.shapes.add_textbox(Inches(0.7), Inches(0.85), Inches(9.8), Inches(0.8))
+    tf = title_box.text_frame
+    set_text_frame_margins(tf)
+    p = tf.paragraphs[0]
+    p.text = title_text
+    t_size = 28 if len(title_text) < 45 else (22 if len(title_text) < 80 else 18)
+    p.font.size = Pt(t_size)
+    p.font.bold = True
+    p.font.name = FONT_TITLE
+    p.font.color.rgb = PRIMARY_DARK
+
+    sub_text = slide_data.get("subtitle", "")
+    offset_y = 1.65
+    if sub_text:
+        sub_box = slide.shapes.add_textbox(Inches(0.7), Inches(1.65), Inches(9.8), Inches(0.55))
+        tf_sub = sub_box.text_frame
+        set_text_frame_margins(tf_sub)
+        p_sub = tf_sub.paragraphs[0]
+        if len(sub_text) > 110:
+            sub_text = sub_text[:107] + "..."
+        p_sub.text = sub_text
+        p_sub.font.size = Pt(14)
+        p_sub.font.color.rgb = MUTED_TEXT
+        offset_y = 2.25
+
+    content = slide_data.get("content", [])
+    if isinstance(content, str):
+        content = [content]
+
+    mid = (len(content) + 1) // 2
+    col1_items = content[:mid]
+    col2_items = content[mid:]
+
+    col_width = Inches(5.7)
+    gap = Inches(0.5)
+
+    box1 = slide.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(0.7), Inches(offset_y), col_width, Inches(4.3))
+    box1.fill.solid()
+    box1.fill.fore_color.rgb = SURFACE_BG
+    box1.line.color.rgb = BORDER_COLOR
+
+    tf1 = box1.text_frame
+    set_text_frame_margins(tf1, top=0.2, bottom=0.2, left=0.2, right=0.2)
+    for idx, item in enumerate(col1_items):
+        p_b = tf1.add_paragraph() if idx > 0 else tf1.paragraphs[0]
+        clean_item = item if len(item) <= 150 else item[:147] + "..."
+        p_b.text = f"•  {clean_item}"
+        p_b.font.size = Pt(13)
+        p_b.font.name = FONT_BODY
+        p_b.font.color.rgb = INK_TEXT
+        p_b.space_after = Pt(8)
+
+    if col2_items:
+        box2 = slide.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(0.7) + col_width + gap, Inches(offset_y), col_width, Inches(4.3))
+        box2.fill.solid()
+        box2.fill.fore_color.rgb = SURFACE_BG
+        box2.line.color.rgb = BORDER_COLOR
+
+        tf2 = box2.text_frame
+        set_text_frame_margins(tf2, top=0.2, bottom=0.2, left=0.2, right=0.2)
+        for idx, item in enumerate(col2_items):
+            p_b = tf2.add_paragraph() if idx > 0 else tf2.paragraphs[0]
+            clean_item = item if len(item) <= 150 else item[:147] + "..."
+            p_b.text = f"•  {clean_item}"
+            p_b.font.size = Pt(13)
+            p_b.font.name = FONT_BODY
+            p_b.font.color.rgb = INK_TEXT
+            p_b.space_after = Pt(8)
+
 def create_closing_slide(prs, slide_data: Dict[str, Any], current: int, total: int, company_name: str = "Enterprise Solutions", logo_path: Optional[str] = None):
     blank_layout = prs.slide_layouts[6]
     slide = prs.slides.add_slide(blank_layout)
@@ -607,6 +683,8 @@ def generate_presentation_and_pdf(project_name: str, slides_data: List[Dict[str,
             create_cards_slide(prs, slide_data, i, total_slides, company_name, logo_path)
         elif layout == "closing":
             create_closing_slide(prs, slide_data, i, total_slides, company_name, logo_path)
+        elif layout == "two_column":
+            create_two_column_slide(prs, slide_data, i, total_slides, company_name, logo_path)
         else:
             create_content_slide(prs, slide_data, i, total_slides, company_name, logo_path)
 

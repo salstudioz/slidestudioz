@@ -74,6 +74,7 @@ def create_project(
     raw_input: str,
     company_name: str = "Enterprise Solutions",
     logo_path: str = "",
+    knowledge_base: str = "",
     slide_count: int = 8,
     duration: str = "30 Menit",
     presenter: str = "Solutions Specialist",
@@ -85,9 +86,9 @@ def create_project(
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("""
-        INSERT INTO projects (id, name, company_name, logo_path, input_type, raw_input, slide_count, duration, presenter, audience, language, tone, status, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'draft', ?, ?)
-    """, (project_id, name, company_name, logo_path, input_type, raw_input, slide_count, duration, presenter, audience, language, tone, now, now))
+        INSERT INTO projects (id, name, company_name, logo_path, knowledge_base, input_type, raw_input, slide_count, duration, presenter, audience, language, tone, status, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'draft', ?, ?)
+    """, (project_id, name, company_name, logo_path, knowledge_base, input_type, raw_input, slide_count, duration, presenter, audience, language, tone, now, now))
     conn.commit()
     conn.close()
     return project_id
@@ -102,16 +103,17 @@ def update_project_metadata(
     audience: str,
     language: str,
     tone: str,
-    slide_count: int
+    slide_count: int,
+    knowledge_base: str = ""
 ):
     now = datetime.now().isoformat()
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("""
         UPDATE projects
-        SET name = ?, company_name = ?, logo_path = ?, duration = ?, presenter = ?, audience = ?, language = ?, tone = ?, slide_count = ?, updated_at = ?
+        SET name = ?, company_name = ?, logo_path = ?, knowledge_base = ?, duration = ?, presenter = ?, audience = ?, language = ?, tone = ?, slide_count = ?, updated_at = ?
         WHERE id = ?
-    """, (name, company_name, logo_path, duration, presenter, audience, language, tone, slide_count, now, project_id))
+    """, (name, company_name, logo_path, knowledge_base, duration, presenter, audience, language, tone, slide_count, now, project_id))
     conn.commit()
     conn.close()
 

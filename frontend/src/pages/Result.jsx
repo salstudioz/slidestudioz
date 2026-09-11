@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { projectService } from '../services/api';
+import { projectService, getDownloadUrl } from '../services/api';
 
 const Result = () => {
   const { id } = useParams();
@@ -93,7 +93,7 @@ const Result = () => {
             
             <div className="flex flex-wrap justify-center gap-4 pt-4">
               <a 
-                href={`/api/projects/${id}/download?format=pptx`}
+                href={getDownloadUrl(id, 'pptx')}
                 target="_blank"
                 rel="noreferrer"
                 className="px-6 py-3.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl shadow-lg shadow-blue-600/30 transition-all font-extrabold text-sm flex items-center"
@@ -102,7 +102,7 @@ const Result = () => {
                 Download PPTX
               </a>
               <a 
-                href={`/api/projects/${id}/download?format=pdf`}
+                href={getDownloadUrl(id, 'pdf')}
                 target="_blank"
                 rel="noreferrer"
                 className="px-6 py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl shadow-lg shadow-emerald-600/30 transition-all font-extrabold text-sm flex items-center"

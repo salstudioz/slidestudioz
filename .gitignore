@@ -26,3 +26,15 @@ frontend/node_modules/
 frontend/dist/
 frontend/.oxlintrc.json
 .DS_Store
+
+# Report & Report Generation Files (Laporan KP)
+Laporan*
+Tahap_*
+FINALPROJECT.md
+dokumenpendukung.*
+dafpus.*
+build_*.py
+generate_laporan_*.py
+assets/gambar_*
+assets/logo_unsoed.png
+

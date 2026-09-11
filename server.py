@@ -53,7 +53,7 @@ class SlideItem(BaseModel):
     slide_number: Optional[int] = 1
     layout: Optional[str] = "content"
     layout_type: Optional[str] = "content"
-    title: str = ""
+    title: Optional[str] = ""
     subtitle: Optional[str] = ""
     content: Any = []
     visual_request: Optional[str] = ""

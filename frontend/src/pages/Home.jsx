@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { projectService } from '../services/api';
+import { projectService, getDownloadUrl } from '../services/api';
 
 const Home = () => {
   const [projects, setProjects] = useState([]);
@@ -117,7 +117,7 @@ const Home = () => {
 
                         {(p.status === 'completed' || p.status === 'generated') && (
                           <a 
-                            href={`/api/projects/${p.id}/download?format=pptx`} 
+                            href={getDownloadUrl(p.id, 'pptx')} 
                             target="_blank" 
                             rel="noreferrer" 
                             className="px-3.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200/60 rounded-lg font-bold text-xs transition-all shrink-0"

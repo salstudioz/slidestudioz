@@ -4,7 +4,12 @@ from dotenv import load_dotenv
 
 # Base directory for GetSlideZ
 BASE_DIR = Path(__file__).resolve().parent.parent
-load_dotenv(BASE_DIR / ".env")
+if (BASE_DIR / ".env").exists():
+    load_dotenv(BASE_DIR / ".env")
+elif (BASE_DIR.parent / ".env").exists():
+    load_dotenv(BASE_DIR.parent / ".env")
+else:
+    load_dotenv()
 
 APP_NAME = "SlideStudioZ"
 APP_DESCRIPTION = "AI-Powered Executive Presentation & Document Generator"

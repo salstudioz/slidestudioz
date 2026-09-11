@@ -1,13 +1,20 @@
 import axios from 'axios';
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? 'http://localhost:8000/api' : '/api'),
+  baseURL: API_BASE_URL,
 });
 
+export const getDownloadUrl = (projectId, format = 'pptx') => {
+  return `${API_BASE_URL}/projects/${projectId}/download?format=${format}`;
+};
+
 export const projectService = {
-  createProject: (data) => api.post('/projects/', data),
+  getHealth: () => api.get('/health'),
+  createProject: (data) => api.post('/projects', data),
   getProject: (id) => api.get(`/projects/${id}`),
-  listProjects: () => api.get('/projects/'),
+  listProjects: () => api.get('/projects'),
   deleteProject: (id) => api.delete(`/projects/${id}`),
   generateDraft: (id) => api.post(`/projects/${id}/draft`),
   getDraft: (id) => api.get(`/projects/${id}/draft`),
@@ -36,3 +43,4 @@ export const projectService = {
     });
   }
 };
+

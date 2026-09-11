@@ -95,9 +95,8 @@ export default function CreateWizard({ onProjectCreated, onCancel }) {
       const newProject = createRes;
 
       // 2. Trigger LLM slide generation
-      const genRes = await api.generateDraft(newProject.id);
-      
-      onProjectCreated(newProject, genRes.slides || []);
+      const slidesList = genRes.slides || genRes.data?.slides || [];
+      onProjectCreated(newProject, slidesList);
     } catch (err) {
       setError(err.message || 'Failed to create presentation deck.');
     } finally {
