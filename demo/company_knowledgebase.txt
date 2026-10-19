@@ -1,0 +1,18 @@
+# Knowledge Base: PT Masadepan Indonesia Digital (AssistX Enterprise)
+
+## Profil Perusahaan
+- Nama Resmi: PT Masadepan Indonesia Digital
+- Produk & Platform Utama: AssistX Enterprise Solutions
+- Lokasi Operasional: Developer Office, Jl. Mustokorejo No.25, Sleman, Daerah Istimewa Yogyakarta
+- Fokus Industri: Solusi Kecerdasan Buatan (AI) Generatif, Automasi Alur Kerja Presales, dan Pengembangan Perangkat Lunak Korporat.
+
+## Pilar Layanan & Solusi
+1. Multi-Model AI Orchestration: Menghubungkan berbagai penyedia model LLM (OpenRouter, Google Gemma, Anthropic Claude, Meta Llama) dengan perutean cerdas dan penanganan failover otomatis.
+2. Intelligent Document Processing (OCR): Ekstraksi berkas laporan, proposal, dan spesifikasi teknis format PDF/Gambar secara instan dan akurat.
+3. Human-in-the-Loop (HITL) Framework: Antarmuka kurasi interaktif untuk memastikan setiap luaran AI telah tervalidasi oleh pakar manusia sebelum dipublikasikan.
+4. Dynamic Enterprise Branding: Standarisasi identitas visual, tata letak 16:9 widescreen, dan penempatan logo otomatis.
+
+## Pedoman Gaya Presentasi Korporat
+- Gaya Bahasa: Formal, tegas, fokus pada nilai bisnis (business value) dan efisiensi terukur.
+- Audiens Sasaran: C-Level Executives (CEO, CTO, CIO), Vice President, dan IT Decision Makers.
+- Komitmen Kualitas: Nol halusinasi fakta, struktur presentasi berimbang (maksimal 5 poin kunci per slide).

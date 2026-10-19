@@ -396,20 +396,38 @@ async def upload_logo(file: UploadFile = File(...)):
 
 @app.post("/api/upload-knowledgebase")
 async def upload_knowledgebase(file: UploadFile = File(...)):
-    """Upload company knowledgebase file (.txt or .md) for baseline context."""
-    if not (file.filename.endswith(".txt") or file.filename.endswith(".md")):
-        raise HTTPException(status_code=400, detail="Standard knowledgebase files must be .txt or .md format.")
+    """Upload company knowledgebase file (.txt, .md, .docx, .pdf, .json, .csv) for baseline context."""
+    filename_lower = file.filename.lower()
+    allowed_exts = ('.txt', '.md', '.docx', '.doc', '.pdf', '.json', '.csv', '.log')
+    if not any(filename_lower.endswith(ext) for ext in allowed_exts):
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Format file '{file.filename}' tidak didukung. Format didukung: .txt, .md, .docx, .pdf, .json, .csv"
+        )
         
+    temp_dir = config.TEMP_UPLOADS_DIR
+    os.makedirs(temp_dir, exist_ok=True)
+    file_path = temp_dir / f"kb_{uuid.uuid4().hex[:8]}_{file.filename}"
+
     try:
         content_bytes = await file.read()
-        text_content = content_bytes.decode("utf-8", errors="ignore").strip()
+        with open(file_path, "wb") as f:
+            f.write(content_bytes)
+
+        text_content = ocr_service.extract_text_from_file(str(file_path))
         return {
             "status": "success",
             "filename": file.filename,
             "content": text_content
         }
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to read knowledgebase file: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Gagal membaca file Knowledgebase: {str(e)}")
+    finally:
+        if file_path.exists():
+            try:
+                file_path.unlink()
+            except Exception:
+                pass
 
 if __name__ == "__main__":
     import uvicorn

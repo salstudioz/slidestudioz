@@ -89,7 +89,8 @@ const NewProject = () => {
       }));
     } catch (err) {
       console.error(err);
-      setError('Gagal membaca file Knowledgebase (.txt/.md).');
+      const msg = err.response?.data?.detail || err.response?.data?.error || err.message || 'Gagal membaca file Knowledgebase.';
+      setError(msg);
     } finally {
       setUploadingKB(false);
     }
@@ -304,16 +305,16 @@ const NewProject = () => {
             <div>
               <div className="flex justify-between items-center mb-2">
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-600">
-                  Knowledgebase Perusahaan / Instansi (.txt / .md) (Opsional)
+                  Knowledgebase Perusahaan / Instansi (.txt, .md, .docx, .pdf) (Opsional)
                 </label>
                 <label htmlFor="kb-file-upload" className="cursor-pointer text-xs font-semibold text-blue-600 hover:text-blue-700 flex items-center">
                   <svg className="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                  {uploadingKB ? 'Mengunggah...' : 'Unggah File (.txt/.md)'}
+                  {uploadingKB ? 'Mengunggah...' : 'Unggah File (.txt/.md/.docx/.pdf)'}
                 </label>
                 <input 
                   type="file" 
                   id="kb-file-upload" 
-                  accept=".txt,.md" 
+                  accept=".txt,.md,.docx,.pdf,.json,.csv" 
                   onChange={handleKnowledgebaseUpload} 
                   className="hidden" 
                 />

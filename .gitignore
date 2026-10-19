@@ -37,4 +37,8 @@ build_*.py
 generate_laporan_*.py
 assets/gambar_*
 assets/logo_unsoed.png
+assets/custom_logo_*
+PPT*.pdf
+*.pdf
+!demo/*.pdf
 
