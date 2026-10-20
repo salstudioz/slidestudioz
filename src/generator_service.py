@@ -44,11 +44,32 @@ def set_text_frame_margins(tf, top=0.05, bottom=0.05, left=0.05, right=0.05):
 
 def resolve_logo_path(custom_logo_path: Optional[str] = None) -> Optional[str]:
     """Resolve active logo path: custom uploaded logo if valid, else default logo."""
+    target_path = None
     if custom_logo_path and os.path.exists(custom_logo_path):
-        return custom_logo_path
-    if DEFAULT_LOGO_PATH.exists():
-        return str(DEFAULT_LOGO_PATH)
-    return None
+        target_path = custom_logo_path
+    elif DEFAULT_LOGO_PATH.exists():
+        target_path = str(DEFAULT_LOGO_PATH)
+
+    if not target_path or not os.path.exists(target_path):
+        return None
+
+    # python-pptx only supports BMP, GIF, JPEG, PNG, TIFF, WMF.
+    # WEBP, AVIF, SVG, etc. will fail! Auto-convert to PNG if needed:
+    ext = os.path.splitext(target_path)[1].lower()
+    if ext not in ['.png', '.jpg', '.jpeg', '.bmp', '.gif', '.tiff']:
+        try:
+            from PIL import Image
+            png_converted = os.path.splitext(target_path)[0] + "_converted.png"
+            if not os.path.exists(png_converted):
+                img = Image.open(target_path).convert("RGBA")
+                img.save(png_converted, "PNG")
+            return png_converted
+        except Exception as conv_err:
+            print(f"[Logo Convert Warning]: {conv_err}")
+            return target_path
+
+    return target_path
+
 
 def add_header_and_footer(slide, current_slide: int, total_slides: int, slide_title: str = "", company_name: str = "Enterprise Solutions", logo_path: Optional[str] = None):
     """

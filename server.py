@@ -443,17 +443,33 @@ async def upload_logo(file: UploadFile = File(...)):
     assets_dir = config.ASSETS_DIR
     os.makedirs(assets_dir, exist_ok=True)
 
-    filename = f"custom_logo_{uuid.uuid4().hex[:8]}_{file.filename}"
-    file_path = assets_dir / filename
+    uid = uuid.uuid4().hex[:8]
+    clean_stem = "".join(c for c in os.path.splitext(file.filename)[0] if c.isalnum() or c in ('_', '-')) or "logo"
+    raw_filename = f"custom_logo_{uid}_{file.filename}"
+    file_path = assets_dir / raw_filename
+    content = await file.read()
     with open(file_path, "wb") as f:
-        content = await file.read()
         f.write(content)
+
+    final_path = file_path
+    final_name = raw_filename
+    try:
+        from PIL import Image
+        img = Image.open(file_path)
+        png_name = f"custom_logo_{uid}_{clean_stem}.png"
+        png_path = assets_dir / png_name
+        img.convert("RGBA").save(png_path, "PNG")
+        final_path = png_path
+        final_name = png_name
+    except Exception as conv_e:
+        print(f"[Logo Upload Convert]: {conv_e}")
 
     return {
         "status": "success",
-        "logo_path": str(file_path),
-        "logo_url": f"/assets/{filename}"
+        "logo_path": str(final_path),
+        "logo_url": f"/assets/{final_name}"
     }
+
 
 @app.post("/api/upload-knowledgebase")
 async def upload_knowledgebase(file: UploadFile = File(...)):
