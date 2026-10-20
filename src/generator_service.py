@@ -71,10 +71,43 @@ def resolve_logo_path(custom_logo_path: Optional[str] = None) -> Optional[str]:
     return target_path
 
 
+def place_logo_shape(slide, logo_path: Optional[str], max_w_in: float, max_h_in: float, right_edge_in: float, top_in: float):
+    """
+    Renders corporate logo dynamically with aspect ratio preservation and right alignment.
+    Adapts perfectly to square, horizontal, and vertical logos with balanced visual weight.
+    """
+    active_logo = resolve_logo_path(logo_path)
+    if not active_logo or not os.path.exists(active_logo):
+        return None
+
+    try:
+        from PIL import Image
+        with Image.open(active_logo) as img:
+            w_px, h_px = img.size
+            aspect = w_px / max(h_px, 1)
+
+        target_w = max_h_in * aspect
+        target_h = max_h_in
+        if target_w > max_w_in:
+            target_w = max_w_in
+            target_h = max_w_in / aspect
+
+        left_in = right_edge_in - target_w
+        return slide.shapes.add_picture(
+            active_logo,
+            Inches(left_in),
+            Inches(top_in),
+            width=Inches(target_w),
+            height=Inches(target_h)
+        )
+    except Exception as e:
+        print(f"[Logo Render Notice]: {e}")
+        return None
+
 def add_header_and_footer(slide, current_slide: int, total_slides: int, slide_title: str = "", company_name: str = "Enterprise Solutions", logo_path: Optional[str] = None):
     """
     Precision layout positioning:
-    - Top-Right Logo
+    - Top-Right Logo (Crisp corporate branding)
     - Top-Left Header Eyebrow ({COMPANY_NAME} • PRESENTATION)
     - Bottom-Left Footer ('{COMPANY_NAME} | Full Slide Title')
     - Bottom-Right Page Number
@@ -92,16 +125,8 @@ def add_header_and_footer(slide, current_slide: int, total_slides: int, slide_ti
     p.font.name = FONT_BODY
     p.font.color.rgb = PRIMARY_BLUE
 
-    # 2. Top-Right Logo
-    active_logo = resolve_logo_path(logo_path)
-    if active_logo:
-        try:
-            slide.shapes.add_picture(
-                active_logo,
-                Inches(10.8), Inches(0.3), height=Inches(0.45)
-            )
-        except Exception as e:
-            print(f"[Logo Render Notice]: {e}")
+    # 2. Top-Right Logo (Balanced header branding with generous size)
+    place_logo_shape(slide, logo_path, max_w_in=2.8, max_h_in=0.70, right_edge_in=12.63, top_in=0.20)
 
     # 3. Bottom-Left Footer
     footer_box = slide.shapes.add_textbox(Inches(0.7), Inches(6.85), Inches(9.5), Inches(0.4))
@@ -139,13 +164,8 @@ def create_cover_slide(prs, slide_data: Dict[str, Any], current: int, total: int
     card.fill.fore_color.rgb = WHITE
     card.line.color.rgb = BORDER_COLOR
 
-    # Top-Right Logo on Cover
-    active_logo = resolve_logo_path(logo_path)
-    if active_logo:
-        try:
-            slide.shapes.add_picture(active_logo, Inches(9.6), Inches(0.9), height=Inches(0.55))
-        except Exception:
-            pass
+    # Top-Right Logo on Cover (Prominent executive placement ~2.5x larger)
+    place_logo_shape(slide, logo_path, max_w_in=3.6, max_h_in=1.35, right_edge_in=12.1, top_in=0.85)
 
     # Title
     title_text = slide_data.get("title", f"{company_name} Executive Presentation")
