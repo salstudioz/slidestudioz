@@ -23,6 +23,14 @@
       "dest": "server.py"
     },
     {
+      "src": "/assets/generated_images/(.*)",
+      "dest": "server.py"
+    },
+    {
+      "src": "/assets/custom_logo_(.*)",
+      "dest": "server.py"
+    },
+    {
       "handle": "filesystem"
     },
     {

@@ -63,3 +63,16 @@ def generate_slide_image(prompt: str, filename: str = None, corner_radius: int =
             
     print("[Image Gen]: Could not generate image from pollinations.ai.")
     return ""
+
+def get_image_data_uri(image_path: str) -> str:
+    """Read an image file and return its data:image/png;base64 string for zero-latency serverless rendering."""
+    if not image_path or not os.path.exists(image_path):
+        return ""
+    try:
+        import base64
+        with open(image_path, "rb") as f:
+            b64 = base64.b64encode(f.read()).decode("utf-8")
+        return f"data:image/png;base64,{b64}"
+    except Exception:
+        return ""
+

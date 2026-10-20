@@ -71,6 +71,39 @@ def resolve_logo_path(custom_logo_path: Optional[str] = None) -> Optional[str]:
     return target_path
 
 
+def get_image_picture_source(img_path_or_data: Optional[str]):
+    """
+    Returns a file path or io.BytesIO stream suitable for slide.shapes.add_picture.
+    Seamlessly supports file paths, Base64 data URIs, and HTTP URLs.
+    """
+    if not img_path_or_data or not str(img_path_or_data).strip():
+        return None
+        
+    s = str(img_path_or_data).strip()
+    if s.startswith("data:image"):
+        try:
+            import io, base64
+            _, b64_part = s.split(",", 1)
+            return io.BytesIO(base64.b64decode(b64_part))
+        except Exception as e:
+            print(f"[Image Base64 Decode Error]: {e}")
+            return None
+
+    if s.startswith("http://") or s.startswith("https://"):
+        try:
+            import io, requests
+            r = requests.get(s, timeout=15)
+            if r.status_code == 200:
+                return io.BytesIO(r.content)
+        except Exception as e:
+            print(f"[Image URL Fetch Error]: {e}")
+            return None
+
+    if os.path.exists(s):
+        return s
+
+    return None
+
 def place_logo_shape(slide, logo_path: Optional[str], max_w_in: float, max_h_in: float, right_edge_in: float, top_in: float):
     """
     Renders corporate logo dynamically with aspect ratio preservation and right alignment.
@@ -197,12 +230,12 @@ def create_cover_slide(prs, slide_data: Dict[str, Any], current: int, total: int
     p_sub.font.color.rgb = PRIMARY_BLUE
 
     # Generated Hero Image Card
-    img_path = slide_data.get("image_path")
-    if img_path and os.path.exists(img_path):
+    img_source = get_image_picture_source(slide_data.get("image_path"))
+    if img_source:
         try:
-            slide.shapes.add_picture(img_path, Inches(9.2), Inches(2.0), Inches(3.0), Inches(3.0))
-        except Exception:
-            pass
+            slide.shapes.add_picture(img_source, Inches(9.2), Inches(2.0), Inches(3.0), Inches(3.0))
+        except Exception as e:
+            print(f"[Cover Image Render Notice]: {e}")
 
     # Presenter / Metadata Details
     content = slide_data.get("content", [])
@@ -296,8 +329,8 @@ def create_content_slide(prs, slide_data: Dict[str, Any], current: int, total: i
         p_sub.font.color.rgb = MUTED_TEXT
         offset_y = 2.25
 
-    img_path = slide_data.get("image_path")
-    has_image = bool(img_path and os.path.exists(img_path))
+    img_source = get_image_picture_source(slide_data.get("image_path"))
+    has_image = bool(img_source)
     content_width = Inches(6.5) if has_image else Inches(11.9)
 
     content = slide_data.get("content", [])
@@ -334,7 +367,7 @@ def create_content_slide(prs, slide_data: Dict[str, Any], current: int, total: i
             frame.fill.fore_color.rgb = SURFACE_BG
             frame.line.color.rgb = BORDER_COLOR
             
-            slide.shapes.add_picture(img_path, Inches(7.7), Inches(offset_y + 0.2), Inches(4.7), Inches(3.6))
+            slide.shapes.add_picture(img_source, Inches(7.7), Inches(offset_y + 0.2), Inches(4.7), Inches(3.6))
         except Exception as e:
             print(f"[Image Render Notice]: {e}")
 

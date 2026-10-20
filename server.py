@@ -87,8 +87,11 @@ def format_slide_dict(s: Dict[str, Any]) -> Dict[str, Any]:
     res["visual_request"] = res.get("image_prompt", "")
     
     img_path = res.get("image_path") or ""
-    if img_path and os.path.exists(img_path):
-        res["image_url"] = f"/assets/generated_images/{os.path.basename(img_path)}"
+    if img_path.startswith("data:image") or img_path.startswith("http"):
+        res["image_url"] = img_path
+    elif img_path and os.path.exists(img_path):
+        data_uri = image_service.get_image_data_uri(img_path)
+        res["image_url"] = data_uri or f"/assets/generated_images/{os.path.basename(img_path)}"
     else:
         res["image_url"] = ""
 
@@ -320,14 +323,15 @@ def generate_slide_image_endpoint(
     if not img_path:
         raise HTTPException(status_code=500, detail="Gagal generate gambar dari AI Pollinations. Periksa koneksi internet.")
 
-    database.update_slide_image(project_id, slide_number, prompt, img_path)
-    image_url = f"/assets/generated_images/{os.path.basename(img_path)}"
+    data_uri = image_service.get_image_data_uri(img_path)
+    stored_img = data_uri if data_uri else img_path
+    database.update_slide_image(project_id, slide_number, prompt, stored_img)
 
     return {
         "status": "success",
         "slide_number": slide_number,
         "image_path": img_path,
-        "image_url": image_url
+        "image_url": data_uri or f"/assets/generated_images/{os.path.basename(img_path)}"
     }
 
 @app.post("/api/projects/{project_id}/generate")
@@ -346,15 +350,18 @@ def generate_final(project_id: str, x_user_id: Optional[str] = Header(None, alia
     # Auto-generate images for slides that have image prompts if not generated yet
     for s in formatted_slides:
         img_p = (s.get("image_prompt") or s.get("visual_request") or "").strip()
-        existing_path = s.get("image_path") or ""
+        existing_img = s.get("image_path") or ""
         s_num = s.get("slide_number", 1)
-        if img_p and img_p.lower() not in ["none", "tidak ada", "-"] and (not existing_path or not os.path.exists(existing_path)):
+        has_img = existing_img.startswith("data:image") or existing_img.startswith("http") or (existing_img and os.path.exists(existing_img))
+        if img_p and img_p.lower() not in ["none", "tidak ada", "-"] and not has_img:
             try:
                 fname = f"{project_id}_slide_{s_num}_{int(time.time())}.png"
                 gen_path = image_service.generate_slide_image(img_p, fname)
                 if gen_path:
-                    s["image_path"] = gen_path
-                    database.update_slide_image(project_id, s_num, img_p, gen_path)
+                    data_uri = image_service.get_image_data_uri(gen_path)
+                    stored_val = data_uri if data_uri else gen_path
+                    s["image_path"] = stored_val
+                    database.update_slide_image(project_id, s_num, img_p, stored_val)
             except Exception as img_err:
                 print(f"[Image Gen Warning for slide {s_num}]: {img_err}")
 
