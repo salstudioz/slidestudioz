@@ -34,7 +34,7 @@ def get_openrouter_client() -> OpenAI:
     return OpenAI(
         base_url="https://openrouter.ai/api/v1",
         api_key=OPENROUTER_API_KEY,
-        timeout=15.0,
+        timeout=40.0,
         default_headers={
             "HTTP-Referer": "https://slidestudioz.ai",
             "X-Title": "SlideStudioZ Presentation Generator"
@@ -86,12 +86,26 @@ FORMAT OUTPUT HARUS PASTI VALID JSON (Tanpa teks lain di luar JSON):
 """
 
 def clean_json_response(response_text: str) -> str:
-    """Extract JSON string from LLM response text."""
-    response_text = response_text.strip()
-    match = re.search(r"```(?:json)?\s*([\s\S]*?)\s*```", response_text)
+    """Extract JSON string from LLM response text safely."""
+    if not response_text:
+        return "{}"
+    text = response_text.strip()
+    match = re.search(r"```(?:json)?\s*([\s\S]*?)\s*```", text)
     if match:
         return match.group(1).strip()
-    return response_text
+    if "```json" in text:
+        parts = text.split("```json", 1)
+        return parts[1].split("```")[0].strip()
+    if "```" in text:
+        parts = text.split("```", 1)
+        return parts[1].split("```")[0].strip()
+
+    first_brace = text.find("{")
+    last_brace = text.rfind("}")
+    if first_brace != -1 and last_brace != -1 and last_brace > first_brace:
+        return text[first_brace:last_brace + 1].strip()
+
+    return text
 
 def parse_sections_from_text(raw_input: str) -> List[Dict[str, Any]]:
     """Smartly parse sections, headings, and bullet points from uploaded text/PDF."""
@@ -225,7 +239,9 @@ INSTRUKSI KHUSUS:
 
     raw_candidates = [
         model,
+        "minimax/minimax-m3.1-flash:free",
         "openrouter/free",
+        "liquid/lfm-2.5-2.6b:free",
         "google/gemma-4-26b-a4b-it:free",
         "google/gemma-4-31b-it:free"
     ]
@@ -243,12 +259,17 @@ INSTRUKSI KHUSUS:
                     {"role": "user", "content": user_message}
                 ],
                 temperature=0.7,
-                max_tokens=4000
+                max_tokens=3500
             )
-            content = response.choices[0].message.content or ""
+            raw_msg = response.choices[0].message
+            content = raw_msg.content or ""
+            if not content and hasattr(raw_msg, "reasoning") and raw_msg.reasoning:
+                content = raw_msg.reasoning
+
             json_str = clean_json_response(content)
             data = json.loads(json_str)
             if data and "slides" in data and len(data["slides"]) > 0:
+                print(f"[LLM Success]: Generated presentation draft via model: {candidate}")
                 return data
         except Exception as e:
             print(f"[LLM Warning]: Candidate model {candidate} notice ({e}). Trying next fallback...")

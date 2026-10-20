@@ -15,11 +15,13 @@ APP_NAME = "SlideStudioZ"
 APP_DESCRIPTION = "AI-Powered Executive Presentation & Document Generator"
 
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
-DEFAULT_MODEL = os.getenv("OPENROUTER_MODEL", "openrouter/free")
+DEFAULT_MODEL = os.getenv("OPENROUTER_MODEL", "minimax/minimax-m3.1-flash:free")
 
 # Available LLM Models on OpenRouter
 LLM_MODELS = {
+    "minimax-flash-free": "minimax/minimax-m3.1-flash:free",
     "openrouter-auto-free": "openrouter/free",
+    "liquid-lfm-free": "liquid/lfm-2.5-2.6b:free",
     "gemma-4-26b-free": "google/gemma-4-26b-a4b-it:free",
     "gemma-4-31b-free": "google/gemma-4-31b-it:free"
 }

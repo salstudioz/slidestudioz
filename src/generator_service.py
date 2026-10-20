@@ -158,8 +158,8 @@ def add_header_and_footer(slide, current_slide: int, total_slides: int, slide_ti
     p.font.name = FONT_BODY
     p.font.color.rgb = PRIMARY_BLUE
 
-    # 2. Top-Right Logo (Balanced header branding with generous size)
-    place_logo_shape(slide, logo_path, max_w_in=2.8, max_h_in=0.70, right_edge_in=12.63, top_in=0.20)
+    # 2. Top-Right Logo (Balanced header branding with generous, prominent size)
+    place_logo_shape(slide, logo_path, max_w_in=3.4, max_h_in=1.10, right_edge_in=12.65, top_in=0.15)
 
     # 3. Bottom-Left Footer
     footer_box = slide.shapes.add_textbox(Inches(0.7), Inches(6.85), Inches(9.5), Inches(0.4))
@@ -197,8 +197,8 @@ def create_cover_slide(prs, slide_data: Dict[str, Any], current: int, total: int
     card.fill.fore_color.rgb = WHITE
     card.line.color.rgb = BORDER_COLOR
 
-    # Top-Right Logo on Cover (Prominent executive placement ~2.5x larger)
-    place_logo_shape(slide, logo_path, max_w_in=3.6, max_h_in=1.35, right_edge_in=12.1, top_in=0.85)
+    # Top-Right Logo on Cover (Substantial executive size ~5.6cm / 2.2 inches)
+    place_logo_shape(slide, logo_path, max_w_in=4.5, max_h_in=2.20, right_edge_in=12.2, top_in=0.70)
 
     # Title
     title_text = slide_data.get("title", f"{company_name} Executive Presentation")
@@ -233,7 +233,7 @@ def create_cover_slide(prs, slide_data: Dict[str, Any], current: int, total: int
     img_source = get_image_picture_source(slide_data.get("image_path"))
     if img_source:
         try:
-            slide.shapes.add_picture(img_source, Inches(9.2), Inches(2.0), Inches(3.0), Inches(3.0))
+            slide.shapes.add_picture(img_source, Inches(9.2), Inches(3.2), Inches(3.0), Inches(3.0))
         except Exception as e:
             print(f"[Cover Image Render Notice]: {e}")
 

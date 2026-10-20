@@ -7,6 +7,7 @@ const NewProject = () => {
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [logoPreview, setLogoPreview] = useState('');
   const [uploadingKB, setUploadingKB] = useState(false);
   const [error, setError] = useState('');
   const [inputMode, setInputMode] = useState('prompt'); // 'prompt' or 'upload'
@@ -61,6 +62,8 @@ const NewProject = () => {
     setError('');
 
     try {
+      const previewUrl = URL.createObjectURL(file);
+      setLogoPreview(previewUrl);
       const response = await projectService.uploadLogo(file);
       setFormData(prev => ({
         ...prev,
@@ -196,7 +199,29 @@ const NewProject = () => {
                   className="w-full border border-slate-200 rounded-xl p-2.5 text-xs focus:ring-2 focus:ring-blue-600 outline-none bg-slate-50 font-medium"
                 />
                 {uploadingLogo && <span className="text-[11px] text-blue-600 font-semibold block mt-1">Mengunggah logo...</span>}
-                {formData.logo_path && <span className="text-[11px] text-emerald-600 font-semibold block mt-1">✓ Logo tersimpan</span>}
+                {logoPreview && (
+                  <div className="mt-2.5 flex items-center gap-3 bg-white p-2.5 rounded-xl border border-slate-200 shadow-sm">
+                    <img 
+                      src={logoPreview} 
+                      alt="Logo Preview" 
+                      className="w-16 h-16 object-contain rounded-lg border border-slate-100 bg-slate-50 p-1" 
+                    />
+                    <div className="text-left space-y-0.5">
+                      <span className="text-[11px] font-bold text-emerald-600 block">✓ Logo Siap Ditampilkan</span>
+                      <p className="text-[10px] text-slate-500">Logo berukuran besar & tajam otomatis disematkan pada Cover & Header slide.</p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setLogoPreview('');
+                          setFormData(prev => ({ ...prev, logo_path: '' }));
+                        }}
+                        className="text-[10px] font-semibold text-rose-500 hover:text-rose-700 underline"
+                      >
+                        Hapus Logo
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div>

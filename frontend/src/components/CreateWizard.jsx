@@ -191,6 +191,16 @@ export default function CreateWizard({ onProjectCreated, onCancel }) {
               {uploadingLogo && <RefreshCw className="w-4 h-4 animate-spin text-cyan-400" />}
               {logoPath && <span className="text-xs text-emerald-400 flex items-center gap-1"><CheckCircle2 className="w-4 h-4"/> Logo Uploaded</span>}
             </div>
+            {logoFile && (
+              <div className="mt-2 flex items-center gap-2.5 p-2 rounded-lg bg-slate-900/60 border border-slate-700/60 w-fit">
+                <img 
+                  src={URL.createObjectURL(logoFile)} 
+                  alt="Logo Preview" 
+                  className="w-12 h-12 object-contain rounded bg-white/5 p-1"
+                />
+                <span className="text-[11px] text-slate-300 font-medium">Logo akan disematkan di cover & header slide</span>
+              </div>
+            )}
           </div>
 
           {/* Mode 1: Prompt Input */}
