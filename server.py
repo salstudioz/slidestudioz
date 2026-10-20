@@ -306,26 +306,27 @@ def generate_slide_image_endpoint(
     payload: Optional[GenerateSlideImagePayload] = Body(None),
     x_user_id: Optional[str] = Header(None, alias="X-User-ID")
 ):
-    """Generate AI illustration for a specific slide on demand."""
     project = database.get_project(project_id, user_id=x_user_id)
-    if not project:
-        raise HTTPException(status_code=404, detail="Project not found")
-
-    slides = database.get_slides(project_id)
+    slides = database.get_slides(project_id) if project else []
     target_slide = next((s for s in slides if s.get("slide_number") == slide_number), None)
-    if not target_slide:
-        raise HTTPException(status_code=404, detail=f"Slide number {slide_number} not found")
 
-    prompt = (payload.prompt if payload and payload.prompt else None) or target_slide.get("image_prompt") or target_slide.get("title") or "Corporate presentation graphic"
+    prompt = (payload.prompt if payload and payload.prompt else None)
+    if not prompt and target_slide:
+        prompt = target_slide.get("image_prompt") or target_slide.get("title")
+    if not prompt:
+        prompt = "Professional corporate presentation visual graphic"
+
     filename = f"{project_id}_slide_{slide_number}_{int(time.time())}.png"
-    
     img_path = image_service.generate_slide_image(prompt, filename)
     if not img_path:
         raise HTTPException(status_code=500, detail="Gagal generate gambar dari AI Pollinations. Periksa koneksi internet.")
 
     data_uri = image_service.get_image_data_uri(img_path)
     stored_img = data_uri if data_uri else img_path
-    database.update_slide_image(project_id, slide_number, prompt, stored_img)
+    try:
+        database.update_slide_image(project_id, slide_number, prompt, stored_img)
+    except Exception:
+        pass
 
     return {
         "status": "success",
