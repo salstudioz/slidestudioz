@@ -41,19 +41,24 @@ def generate_slide_image(prompt: str, filename: str = None, corner_radius: int =
         filename += ".png"
         
     output_path = GENERATED_IMAGES_DIR / filename
+    output_path.parent.mkdir(parents=True, exist_ok=True)
     
-    models = ["flux", "turbo"]
+    models = [None, "turbo", "flux"]
     for model in models:
-        url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?model={model}&width=1024&height=576&nologo=true"
+        if model:
+            url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?model={model}&width=1024&height=576&nologo=true"
+        else:
+            url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width=1024&height=576&nologo=true"
+            
         try:
-            r = requests.get(url, timeout=45)
+            r = requests.get(url, timeout=25)
             if r.status_code == 200 and len(r.content) > 1000:
                 with open(output_path, "wb") as f:
                     f.write(r.content)
                 apply_rounded_corners(str(output_path), corner_radius=corner_radius)
                 return str(output_path)
         except Exception as e:
-            print(f"[Image Gen Warning]: {e} on model {model}")
+            print(f"[Image Gen Warning]: {e} on model {model or 'default'}")
             continue
             
     print("[Image Gen]: Could not generate image from pollinations.ai.")

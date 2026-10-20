@@ -212,6 +212,18 @@ def update_slide(slide_id: int, title: str, subtitle: str, content: Any, layout_
     conn.commit()
     conn.close()
 
+def update_slide_image(project_id: str, slide_number: int, image_prompt: str, image_path: str):
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        UPDATE slides
+        SET image_prompt = ?, image_path = ?
+        WHERE project_id = ? AND slide_number = ?
+    """, (image_prompt, image_path, project_id, slide_number))
+    conn.commit()
+    conn.close()
+
+
 def update_project_status(project_id: str, status: str, pptx_path: str = None, pdf_path: str = None):
     now = datetime.now().isoformat()
     conn = get_connection()

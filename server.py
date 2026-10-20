@@ -1,5 +1,7 @@
 import os
 import uuid
+import time
+import json
 from typing import List, Dict, Any, Optional
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Body, Query, Header
 from fastapi.middleware.cors import CORSMiddleware
@@ -7,7 +9,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
-from src import database, config, llm_service, generator_service, ocr_service
+from src import database, config, llm_service, generator_service, ocr_service, image_service
 
 app = FastAPI(
     title="SlideStudioZ REST API",
@@ -84,6 +86,12 @@ def format_slide_dict(s: Dict[str, Any]) -> Dict[str, Any]:
     res["layout"] = res.get("layout_type", "content")
     res["visual_request"] = res.get("image_prompt", "")
     
+    img_path = res.get("image_path") or ""
+    if img_path and os.path.exists(img_path):
+        res["image_url"] = f"/assets/generated_images/{os.path.basename(img_path)}"
+    else:
+        res["image_url"] = ""
+
     raw_content = res.get("content", [])
     if isinstance(raw_content, str):
         try:
@@ -95,6 +103,10 @@ def format_slide_dict(s: Dict[str, Any]) -> Dict[str, Any]:
         res["content"] = [str(raw_content)]
         
     return res
+
+class GenerateSlideImagePayload(BaseModel):
+    prompt: Optional[str] = None
+
 
 # --- API Endpoints ---
 
@@ -284,6 +296,40 @@ def update_draft(project_id: str, payload: DraftPayload, x_user_id: Optional[str
         }
     }
 
+@app.post("/api/projects/{project_id}/slides/{slide_number}/generate-image")
+def generate_slide_image_endpoint(
+    project_id: str, 
+    slide_number: int, 
+    payload: Optional[GenerateSlideImagePayload] = Body(None),
+    x_user_id: Optional[str] = Header(None, alias="X-User-ID")
+):
+    """Generate AI illustration for a specific slide on demand."""
+    project = database.get_project(project_id, user_id=x_user_id)
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    slides = database.get_slides(project_id)
+    target_slide = next((s for s in slides if s.get("slide_number") == slide_number), None)
+    if not target_slide:
+        raise HTTPException(status_code=404, detail=f"Slide number {slide_number} not found")
+
+    prompt = (payload.prompt if payload and payload.prompt else None) or target_slide.get("image_prompt") or target_slide.get("title") or "Corporate presentation graphic"
+    filename = f"{project_id}_slide_{slide_number}_{int(time.time())}.png"
+    
+    img_path = image_service.generate_slide_image(prompt, filename)
+    if not img_path:
+        raise HTTPException(status_code=500, detail="Gagal generate gambar dari AI Pollinations. Periksa koneksi internet.")
+
+    database.update_slide_image(project_id, slide_number, prompt, img_path)
+    image_url = f"/assets/generated_images/{os.path.basename(img_path)}"
+
+    return {
+        "status": "success",
+        "slide_number": slide_number,
+        "image_path": img_path,
+        "image_url": image_url
+    }
+
 @app.post("/api/projects/{project_id}/generate")
 def generate_final(project_id: str, x_user_id: Optional[str] = Header(None, alias="X-User-ID")):
     """Generate final PPTX and PDF presentation files."""
@@ -296,6 +342,21 @@ def generate_final(project_id: str, x_user_id: Optional[str] = Header(None, alia
         raise HTTPException(status_code=400, detail="No slides found in project")
 
     formatted_slides = [format_slide_dict(s) for s in slides]
+
+    # Auto-generate images for slides that have image prompts if not generated yet
+    for s in formatted_slides:
+        img_p = (s.get("image_prompt") or s.get("visual_request") or "").strip()
+        existing_path = s.get("image_path") or ""
+        s_num = s.get("slide_number", 1)
+        if img_p and img_p.lower() not in ["none", "tidak ada", "-"] and (not existing_path or not os.path.exists(existing_path)):
+            try:
+                fname = f"{project_id}_slide_{s_num}_{int(time.time())}.png"
+                gen_path = image_service.generate_slide_image(img_p, fname)
+                if gen_path:
+                    s["image_path"] = gen_path
+                    database.update_slide_image(project_id, s_num, img_p, gen_path)
+            except Exception as img_err:
+                print(f"[Image Gen Warning for slide {s_num}]: {img_err}")
 
     try:
         export_res = generator_service.generate_presentation_and_pdf(

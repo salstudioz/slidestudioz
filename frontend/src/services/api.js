@@ -42,6 +42,7 @@ export const projectService = {
   updateDraft: (id, draft) => api.put(`/projects/${id}/draft`, draft),
   regenerateDraft: (id) => api.post(`/projects/${id}/draft/regenerate`),
   generateFinal: (id) => api.post(`/projects/${id}/generate`),
+  generateSlideImage: (id, slideNumber, prompt) => api.post(`/projects/${id}/slides/${slideNumber}/generate-image`, { prompt }),
   uploadDocument: (file) => {
     const formData = new FormData();
     formData.append('file', file);

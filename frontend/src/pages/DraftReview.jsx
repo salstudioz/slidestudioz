@@ -9,6 +9,7 @@ const DraftReview = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [generatingImgIndex, setGeneratingImgIndex] = useState(null);
 
   useEffect(() => {
     fetchDraft();
@@ -24,6 +25,41 @@ const DraftReview = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleGenerateImage = async (index) => {
+    const slide = draft.slides[index];
+    const prompt = (slide.visual_request || slide.image_prompt || slide.title || '').trim();
+    if (!prompt || prompt.toLowerCase() === 'none') {
+      alert('Silakan isi prompt visual terlebih dahulu.');
+      return;
+    }
+    setGeneratingImgIndex(index);
+    try {
+      const response = await projectService.generateSlideImage(id, slide.slide_number || (index + 1), prompt);
+      const updatedSlides = [...draft.slides];
+      updatedSlides[index] = {
+        ...updatedSlides[index],
+        image_path: response.data.image_path,
+        image_url: response.data.image_url
+      };
+      setDraft({ ...draft, slides: updatedSlides });
+    } catch (err) {
+      console.error(err);
+      alert('Gagal menghasilkan gambar AI: ' + (err.response?.data?.detail || err.message));
+    } finally {
+      setGeneratingImgIndex(null);
+    }
+  };
+
+  const handleRemoveImage = (index) => {
+    const updatedSlides = [...draft.slides];
+    updatedSlides[index] = {
+      ...updatedSlides[index],
+      image_path: '',
+      image_url: ''
+    };
+    setDraft({ ...draft, slides: updatedSlides });
   };
 
   const handleSlideChange = (index, field, value) => {
@@ -169,16 +205,61 @@ const DraftReview = () => {
                 </select>
               </div>
               <div>
-                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1 block">Visual Prompt AI</label>
+                <div className="flex justify-between items-center mb-1">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
+                    Visual Prompt AI (Pollinations.ai)
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => handleGenerateImage(idx)}
+                    disabled={generatingImgIndex === idx}
+                    className="text-[11px] font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1 transition-colors"
+                  >
+                    {generatingImgIndex === idx ? (
+                      <>
+                        <span className="w-3 h-3 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></span>
+                        <span className="text-slate-500 font-semibold">Generating...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>⚡ {slide.image_url ? 'Re-generate' : 'Generate Gambar'}</span>
+                      </>
+                    )}
+                  </button>
+                </div>
                 <input 
                   type="text" 
-                  value={slide.visual_request || slide.image_prompt || 'none'} 
+                  value={slide.visual_request || slide.image_prompt || ''} 
+                  placeholder="Deskripsi visual ilustrasi slide (English/Indonesia)..."
                   onChange={(e) => {
                     handleSlideChange(idx, 'visual_request', e.target.value);
                     handleSlideChange(idx, 'image_prompt', e.target.value);
                   }}
                   className="w-full border border-slate-200 rounded-lg p-2 text-xs font-medium focus:outline-none focus:ring-1 focus:ring-blue-600 bg-white"
                 />
+
+                {slide.image_url && (
+                  <div className="mt-2.5 flex items-center gap-3 bg-white p-2 rounded-xl border border-slate-200 shadow-sm">
+                    <img 
+                      src={slide.image_url} 
+                      alt={`Slide ${idx + 1} Visual`}
+                      className="w-24 h-14 object-cover rounded-lg border border-slate-100 shadow-inner shrink-0" 
+                    />
+                    <div className="text-left space-y-0.5">
+                      <span className="text-[11px] font-bold text-emerald-600 block flex items-center gap-1">
+                        ✓ Gambar Siap di-Embed
+                      </span>
+                      <p className="text-[10px] text-slate-400">Otomatis masuk ke layout slide PowerPoint & PDF.</p>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveImage(idx)}
+                        className="text-[10px] font-semibold text-rose-500 hover:text-rose-700 underline"
+                      >
+                        Hapus Gambar
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
